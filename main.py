@@ -2,15 +2,15 @@ from flask import Flask
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import DocType, String, Date, Nested
 
+from . import settings
 
 app = Flask(__name__)
 es = Elasticsearch()
 
 class Institution(DocType):
-	title = String()
-	estabilished = Date()
-	location = Nested(
-		properties={
+	name = String()
+	estabilished = String()
+	location = {
 			'street_address': String(),
 			'city': String(),
 			'state': String(),
@@ -21,5 +21,5 @@ class Institution(DocType):
 	web_url = String()
 	_id = Integer()
 	class Meta:
-		index = 'institution'
+		index = settings.ELASTICINDEX
 
