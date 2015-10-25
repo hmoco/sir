@@ -1,7 +1,7 @@
 import csv
 import logging
 from schema_transformer.transformer import CSVTransformer
-
+from elasticsearch.exceptions import SerializationError
 from main import Institution
 
 logger = logging.getLogger(__name__)
@@ -10,9 +10,11 @@ logging.basicConfig()
 IPEDS_FILE = 'hd2013.csv'
 
 class IpedsTransformer(CSVTransformer):
+
 	def _transform_string(self, val, doc):
-		val = (val)
+		val = val.decode('Windows-1252').encode('utf-8')
 		return super(IpedsTransformer, self)._transform_string(val, doc)
+
 	def load(self, doc):
 		return doc
 
@@ -36,11 +38,11 @@ reader = csv.reader(f)
 
 transformer = IpedsTransformer(schema, next(reader))
 
-while reader:
-	transformed = transformer.transform(next(reader))
+for row in reader:
+	transformed = transformer.transform(row)
 	logger.info('Adding {0}.'.format(transformed['name']))
 	try:
 		inst = Institution(country='United States', **transformed)
 		inst.save()
-	except:
-		pass
+	except SerializationError:
+		print transformed

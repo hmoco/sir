@@ -31,8 +31,6 @@ class Institution(DocType):
 
 Institution.init()
 
-s = Search(index=ELASTIC_INDEX)
-response = s.execute()
-
-for hit in response:
-    import ipdb; ipdb.set_trace()
+s = Search()
+res = s.execute()
+print(res.hits.total)
