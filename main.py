@@ -1,25 +1,38 @@
 from flask import Flask
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import DocType, String, Date, Nested
+from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search
+from elasticsearch_dsl.connections import connections
 
-from . import settings
+ELASTIC_URI = 'http://localhost:9200'
+ELASTIC_INDEX = 'institution'
 
 app = Flask(__name__)
-es = Elasticsearch()
+
+connections.create_connection(hosts=[ELASTIC_URI])
+
 
 class Institution(DocType):
 	name = String()
 	estabilished = String()
 	location = {
-			'street_address': String(),
-			'city': String(),
-			'state': String(),
-			'country': String(),
-			'ext_code': Integer()
-		}
-	)
+		'street_address': String(),
+		'city': String(),
+		'state': String(),
+		'country': String(),
+		'ext_code': Integer()
+	}
 	web_url = String()
 	_id = Integer()
+	public = Boolean()
+	for_profit = Boolean()
+	degree = Boolean()
 	class Meta:
-		index = settings.ELASTICINDEX
+		index = ELASTIC_INDEX
 
+Institution.init()
+
+s = Search(index=ELASTIC_INDEX)
+response = s.execute()
+
+for hit in response:
+    import ipdb; ipdb.set_trace()
