@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search
+from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search, Q
 from elasticsearch_dsl.connections import connections
 
 ELASTIC_URI = 'http://localhost:9200'
@@ -39,10 +39,42 @@ class Institution(DocType):
 def main():
 	Institution.init()
 
+def _arg_getter(request, get):
+	val = request.args.get(get)
+	if not val:
+		val = request.json.get(get)
+	return val if val else None
+
+def _arg_query_param(request, arg, get):
+	val = _arg_getter(request, get)
+	dick = {arg: val}
+	return Q('match', val) if val else None
+
+def _inst_query_builder(queries, _and=True):
+	queries = [ Q('match': **{k, v}) for k, v in queries.items() ]
+	
+	func = (lambda x, y: x & y) if _and else (lambda x, y: x | y)
+	return reduce(func, queries)
+
+
+def validate_fields(keys):
+	for key in keys:
+		if key not in INSTITUTION_FIELDS:
+			return False
+	return True
+
+
 @app.route('/institutions', methods=['GET', 'POST'])
 def all_institutions():
 	page = int(request.args.get('page')) or 1
 	start = (page - 1) * SIZE
+	queries = {key: value for key, value in request.args.items() if k != 'page'}
+	queries.update({key: value for key, value in request.json.items() if k != 'page'})
+
+	assert validate_fields(queries.keys())
+	query = _inst_query_builder(queries)
+
+	search_schema = ''
 	import ipdb; ipdb.set_trace()
 	s = Search(index=ELASTIC_INDEX).query('match', _all=request.args.get('q', ''))[start:start + SIZE]
 	res = s.execute()
