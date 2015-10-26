@@ -12,8 +12,8 @@ IPEDS_FILE = 'hd2013.csv'
 class IpedsTransformer(CSVTransformer):
 
 	def _transform_string(self, val, doc):
-		val = val.decode('Windows-1252').encode('utf-8')
-		return super(IpedsTransformer, self)._transform_string(val, doc)
+		val = super(IpedsTransformer, self)._transform_string(val, doc)
+		return val.decode('Windows-1252').encode('utf-8')
 
 	def load(self, doc):
 		return doc
@@ -27,22 +27,34 @@ schema = {
 		'ext_code': 'ZIP'
 	},
 	'web_url': 'WEBADDR',
-	'_id': ('UNITID', lambda x: int(x)),
+	'id': ('UNITID', int),
 	'public': ('CONTROL', lambda x: int(x) ==  2),
 	'for_profit': ('CONTROL', lambda x: int(x) == 3),
 	'degree': ('UGOFFER', lambda x: int(x) == 1)
 }
 
-f = open(IPEDS_FILE)
-reader = csv.reader(f)
+def debug(func):
+    def inner(*args, **kwargs):
+        import ipdb
+        with ipdb.launch_ipdb_on_exception():
+            return func(*args, **kwargs)
+    return inner
 
-transformer = IpedsTransformer(schema, next(reader))
+@debug
+def main():
+	with open(IPEDS_FILE) as f:
+		reader = csv.reader(f)
 
-for row in reader:
-	transformed = transformer.transform(row)
-	logger.info('Adding {0}.'.format(transformed['name']))
-	try:
-		inst = Institution(country='United States', **transformed)
-		inst.save()
-	except SerializationError:
-		print transformed
+		transformer = IpedsTransformer(schema, next(reader))
+
+		for row in reader:
+			transformed = transformer.transform(row)
+			logger.info('Adding {0}.'.format(transformed['name']))
+			
+			inst = Institution(country='United States', **transformed)
+			inst.save()
+
+if __name__ == "__main__":
+	main()
+
+
