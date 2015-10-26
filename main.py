@@ -39,30 +39,17 @@ class Institution(DocType):
 def main():
 	Institution.init()
 
-def _arg_getter(request, get):
-	val = request.args.get(get)
-	if not val:
-		val = request.json.get(get)
-	return val if val else None
-
-def _arg_query_param(request, arg, get):
-	val = _arg_getter(request, get)
-	dick = {arg: val}
-	return Q('match', val) if val else None
-
-def _inst_query_builder(queries, _and=True):
+def query_builder(queries, _and=True):
 	queries = [ Q('match': **{k, v}) for k, v in queries.items() ]
 	
 	func = (lambda x, y: x & y) if _and else (lambda x, y: x | y)
 	return reduce(func, queries)
-
 
 def validate_fields(keys):
 	for key in keys:
 		if key not in INSTITUTION_FIELDS:
 			return False
 	return True
-
 
 @app.route('/institutions', methods=['GET', 'POST'])
 def all_institutions():
@@ -72,7 +59,7 @@ def all_institutions():
 	queries.update({key: value for key, value in request.json.items() if k != 'page'})
 
 	assert validate_fields(queries.keys())
-	query = _inst_query_builder(queries)
+	query = query_builder(queries)
 
 	search_schema = ''
 	import ipdb; ipdb.set_trace()
