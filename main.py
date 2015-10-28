@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request, Response
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search, Q
@@ -12,6 +14,8 @@ app.debug = True
 
 connections.create_connection(hosts=[ELASTIC_URI])
 
+INSTITUTION_FIELDS = ['name', 'established', 'street_address', 'city', 'state', 'country', 'ext_code', 'web_url',
+'_id', 'public', 'for_profit', 'degree']
 
 class Institution(DocType):
 	name = String()
@@ -40,7 +44,8 @@ def main():
 	Institution.init()
 
 def query_builder(queries, _and=True):
-	queries = [ Q('match': **{k, v}) for k, v in queries.items() ]
+	assert validate_fields(queries.keys())
+	queries = [ Q('match', **{k: v}) for k, v in queries.items() ]
 	
 	func = (lambda x, y: x & y) if _and else (lambda x, y: x | y)
 	return reduce(func, queries)
@@ -53,20 +58,22 @@ def validate_fields(keys):
 
 @app.route('/institutions', methods=['GET', 'POST'])
 def all_institutions():
-	page = int(request.args.get('page')) or 1
+	page = int(request.args.get('page') or 1)
 	start = (page - 1) * SIZE
-	queries = {key: value for key, value in request.args.items() if k != 'page'}
-	queries.update({key: value for key, value in request.json.items() if k != 'page'})
+	queries = {key: value for key, value in request.args.items() if key != 'page'}
+	queries.update({key: value for key, value in (request.json or {}).items() if key != 'page'})
 
-	assert validate_fields(queries.keys())
-	query = query_builder(queries)
+	try:
+		query = query_builder(queries)
+	except AssertionError:
+		return Response({'Query Invalid'}, status=500)
 
-	search_schema = ''
-	import ipdb; ipdb.set_trace()
-	s = Search(index=ELASTIC_INDEX).query('match', _all=request.args.get('q', ''))[start:start + SIZE]
+	s = Search(index=ELASTIC_INDEX).query(query)[start:start + SIZE]
 	res = s.execute()
-	print res
-	return Response({'status': 'cool'}, status=403)
+
+	#Do some logic then return the results
+
+	return Response(json.dumps(res.to_dict()), status=200)
 
 
 @app.route('/')
