@@ -46,7 +46,9 @@ def main():
 
 def query_builder(queries, _and=True):
 	assert validate_fields(queries.keys())
-	queries = [ Q('match', **{k: v}) for k, v in queries.items() ]
+	queries = [Q('match', **{k: v}) for k, v in queries.items()]
+	if not queries:
+		return None
 	
 	func = (lambda x, y: x & y) if _and else (lambda x, y: x | y)
 	return reduce(func, queries)
@@ -57,24 +59,47 @@ def validate_fields(keys):
 			return False
 	return True
 
-@app.route('/institutions', methods=['GET', 'POST'])
-def all_institutions():
+def get_names(result):
+	return [val['_source']['name'] for val in result.to_dict().get('hits').get('hits')]
+
+def search_builder(request, size=SIZE):
 	page = int(request.args.get('page') or 1)
-	start = (page - 1) * SIZE
+	start = (page - 1) * size
 	queries = {key: value for key, value in request.args.items() if key != 'page'}
 	queries.update({key: value for key, value in (request.json or {}).items() if key != 'page'})
 
 	try:
 		query = query_builder(queries)
+	except AssertionError as e:
+		raise e
+
+	if query:
+		return Search(index=ELASTIC_INDEX).query(query)[start:start + size]
+		
+	return Search(index=ELASTIC_INDEX)[start:start + size]
+
+@app.route('/institutions', methods=['GET', 'POST'])
+def all_institutions():
+	try:
+		s = search_builder(request)
+	except AssertionError:
+		return Response({'Query Invalid'}, status=500)
+		
+	res = s.execute()
+
+	return Response(json.dumps(res.to_dict()), status=200)
+
+@app.route('/institutions/names', methods=['GET', 'POST'])
+def all_institutions_titles():
+	try:
+		s = search_builder(request, size=20)
 	except AssertionError:
 		return Response({'Query Invalid'}, status=500)
 
-	s = Search(index=ELASTIC_INDEX).query(query)[start:start + SIZE]
 	res = s.execute()
 
-	#Do some logic then return the results
+	return Response(json.dumps(get_names(res)), status=200)
 
-	return Response(json.dumps(res.to_dict()), status=200)
 
 @app.route('/')
 def home():
