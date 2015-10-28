@@ -105,8 +105,11 @@ def autocomplete_institutions_titles():
 	name = str(request.args.get('name'))
 	if not name:
 		return Response({'Autocomplete query requires a "?name={} parameter'}, status=500)
-
-	s = Search(index=ELASTIC_INDEX).query('match_phrase_prefix', name={'query': name, 'slop': 5})
+	page = int(request.args.get('page') or 1)
+	size = int(request.args.get('size') or 10)
+	start = (page - 1) * size
+	s = Search(index=ELASTIC_INDEX)
+	s.query('match_phrase_prefix', name={'query': name, 'slop': 5})[start:start + size]
 	res = s.execute()
 
 	return Response(json.dumps(get_names(res)), status=200)
