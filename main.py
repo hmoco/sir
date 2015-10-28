@@ -75,7 +75,7 @@ def search_builder(request, size=SIZE):
 
 	if query:
 		return Search(index=ELASTIC_INDEX).query(query)[start:start + size]
-		
+
 	return Search(index=ELASTIC_INDEX)[start:start + size]
 
 @app.route('/institutions', methods=['GET', 'POST'])
@@ -100,8 +100,18 @@ def all_institutions_titles():
 
 	return Response(json.dumps(get_names(res)), status=200)
 
+@app.route('/institutions/autocomplete', methods=['GET'])
+def autocomplete_institutions_titles():
+	name = str(request.args.get('name'))
+	if not name:
+		return Response({'Autocomplete query requires a "?name={} parameter'}, status=500)
 
-@app.route('/')
+	s = Search(index=ELASTIC_INDEX).query('match_phrase_prefix', name={'query': name, 'slop': 5})
+	res = s.execute()
+
+	return Response(json.dumps(get_names(res)), status=200)
+
+
 def home():
 	with open('README.md', 'r') as docs:
 		content = Markup(markdown.markdown(docs.read()))
