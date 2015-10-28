@@ -1,6 +1,7 @@
 import json
+import markdown
 
-from flask import Flask, request, Response
+from flask import Flask, request, Response, render_template, Markup
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search, Q
 from elasticsearch_dsl.connections import connections
@@ -75,10 +76,11 @@ def all_institutions():
 
 	return Response(json.dumps(res.to_dict()), status=200)
 
-
 @app.route('/')
 def home():
-    return 'poo'
+	with open('README.md', 'r') as docs:
+		content = Markup(markdown.markdown(docs.read()))
+	return render_template('home.html', content=content)
 
 if __name__ == '__main__':
 	main()

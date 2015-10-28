@@ -1,5 +1,6 @@
 import csv
 import logging
+
 from schema_transformer.transformer import CSVTransformer
 from elasticsearch.exceptions import SerializationError
 from main import Institution
