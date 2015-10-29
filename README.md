@@ -1,4 +1,4 @@
-# Institutions Repository (better name on the way!)
+# SIR (SHARE Institutions Repository)
 
 ## Primary Goals And Rationale
 This is inteded to be a quick implementation of a collection of institutions, with unique identifiers and convenient API, 
