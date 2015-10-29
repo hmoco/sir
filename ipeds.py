@@ -8,7 +8,7 @@ from main import Institution
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 
-IPEDS_FILE = 'hd2013.csv'
+IPEDS_FILE = 'raw_data/hd2013.csv'
 
 class IpedsTransformer(CSVTransformer):
 
@@ -28,7 +28,7 @@ schema = {
 		'ext_code': 'ZIP'
 	},
 	'web_url': 'WEBADDR',
-	'id': ('UNITID', int),
+	'id': 'UNITID',
 	'public': ('CONTROL', lambda x: int(x) ==  2),
 	'for_profit': ('CONTROL', lambda x: int(x) == 3),
 	'degree': ('UGOFFER', lambda x: int(x) == 1)

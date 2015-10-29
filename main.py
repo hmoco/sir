@@ -29,10 +29,11 @@ class Institution(DocType):
 		'ext_code': Integer()
 	}
 	web_url = String()
-	_id = Integer()
+	_id = String()
 	public = Boolean()
 	for_profit = Boolean()
 	degree = Boolean()
+	other_names = String()
 	
 	def save(self, **kwargs):
 		self.meta.id = self.id
@@ -108,13 +109,12 @@ def autocomplete_institutions_titles():
 	page = int(request.args.get('page') or 1)
 	size = int(request.args.get('size') or 10)
 	start = (page - 1) * size
-	s = Search(index=ELASTIC_INDEX)
-	s.query('match_phrase_prefix', name={'query': name, 'slop': 5})[start:start + size]
+	s = Search(index=ELASTIC_INDEX).query('match_phrase_prefix', name={'query': name, 'slop': 5})[start:start + size]
 	res = s.execute()
 
 	return Response(json.dumps(get_names(res)), status=200)
 
-
+@app.route('/')
 def home():
 	with open('README.md', 'r') as docs:
 		content = Markup(markdown.markdown(docs.read()))
