@@ -7,8 +7,19 @@ def server():
 
 @task
 def populate():
-	sources = 'sources/'
-	files = [file_ for file_ in os.listdir(sources) if os.path.isfile(os.path.join(sources, file_))]
-	print files
-	for file_ in files:
-		run ('python {}'.format(os.path.join(sources, file_)))
+	grid()
+	ipeds()
+
+@task
+def grid():
+	import main
+	from sources import grid
+	main.main()
+	grid.populate()
+
+@task
+def ipeds():
+	import main
+	from sources import ipeds
+	main.main()
+	ipeds.populate()

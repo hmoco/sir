@@ -43,7 +43,7 @@ def debug(func):
     return inner
 
 @debug
-def main():
+def populate():
 	with open(IPEDS_FILE) as f:
 		reader = csv.reader(f)
 
@@ -57,6 +57,4 @@ def main():
 			inst.save()
 
 if __name__ == "__main__":
-	main()
-
-
+	populate()

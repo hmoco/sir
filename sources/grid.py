@@ -14,15 +14,15 @@ class GridTransformer(JSONTransformer):
 schema = {
 	'name': '/name',
 	'location': {
-		'street_address': ('/addresses', lambda x: x[0]['line_1']),
-		'city': ('/addresses', lambda x: x[0]['city']),
-		'state': ('/addresses', lambda x: x[0]['state']),
-		'ext_code': ('/addresses', lambda x: x[0]['postcode']),
-		'country': ('/addresses', lambda x: x[0]['country'])
+		'street_address': ('/addresses', lambda x: x[0]['line_1'] if x else None),
+		'city': ('/addresses', lambda x: x[0]['city'] if x else None),
+		'state': ('/addresses', lambda x: x[0]['state'] if x else None),
+		'ext_code': ('/addresses', lambda x: x[0]['postcode'] if x else None),
+		'country': ('/addresses', lambda x: x[0]['country'] if x else None)
 	},
-	'web_url': ('/links', lambda x: x[0]),
+	'web_url': ('/links', lambda x: x[0] if x else None),
 	'id_': '/id',
-	'other_names': ('/aliases', '/acronyms')
+	'other_names': ('/aliases', '/acronyms', lambda x, y: x + y if x and y else x if x else y if y else None)
 }
 
 def debug(func):
@@ -32,19 +32,22 @@ def debug(func):
             return func(*args, **kwargs)
     return inner
 
-@debug
-def main():
-	with open(GRID_FILE, 'r') as f:
-		docs = json.loads(f)
-
+def populate():
+	with open(GRID_FILE) as f:
+		clean = f.read().replace('\n', '')
+		docs = json.loads(clean)
 		transformer = GridTransformer(schema)
 
-		for doc in docs:
-			transformed = transformer.transform(doc)
-			logger.info('Adding {0}.'.format(transformed['name']))
+		for doc in docs['institutes']:
+			try:
+				transformed = transformer.transform(doc, load=False)
+				#logger.info('Adding {0}.'.format(transformed['name']))
 			
-			inst = Institution(**transformed)
-			inst.save()
+				inst = Institution(**transformed)
+				inst.save()
+				print transformed
+			except UnicodeDecodeError:
+				pass
 
 if __name__ == "__main__":
-	main()
+	populate()

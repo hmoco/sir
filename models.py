@@ -20,7 +20,7 @@ class Institution(DocType):
 	other_names = String()
 	
 	def save(self, **kwargs):
-		self.meta.id = self.id
+		self.meta.id = self.id_
 		return super(Institution, self).save(**kwargs)
 
 	class Meta:
