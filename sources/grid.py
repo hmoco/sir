@@ -1,17 +1,15 @@
 import json
 import logging
-
 from schema_transformer.transformer import JSONTransformer
-from main import Institution
+
+from models import Institution
+from settings import GRID_FILE
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 
-GRID_FILE = 'raw_data/grid_2015_10_09.json'
-
 class GridTransformer(JSONTransformer):
-	def load(self, doc):
-		return doc
+	pass
 
 schema = {
 	'name': '/name',
@@ -23,7 +21,7 @@ schema = {
 		'country': ('/addresses', lambda x: x[0]['country'])
 	},
 	'web_url': ('/links', lambda x: x[0]),
-	'id': '/id',
+	'id_': '/id',
 	'other_names': ('/aliases', '/acronyms')
 }
 
@@ -36,13 +34,13 @@ def debug(func):
 
 @debug
 def main():
-	with open(GRID_FILE) as f:
-		reader = csv.reader(f)
+	with open(GRID_FILE, 'r') as f:
+		docs = json.loads(f)
 
-		transformer = GridTransformer(schema, next(reader))
+		transformer = GridTransformer(schema)
 
-		for row in reader:
-			transformed = transformer.transform(row)
+		for doc in docs:
+			transformed = transformer.transform(doc)
 			logger.info('Adding {0}.'.format(transformed['name']))
 			
 			inst = Institution(**transformed)

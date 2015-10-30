@@ -1,46 +1,17 @@
 import json
 import markdown
-
 from flask import Flask, request, Response, render_template, Markup
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import DocType, String, Date, Boolean, Integer, Search, Q
 from elasticsearch_dsl.connections import connections
 
-ELASTIC_URI = 'http://localhost:9200'
-ELASTIC_INDEX = 'institution'
-SIZE = 10
+from models import Institution
+from settings import ELASTIC_URI, ELASTIC_INDEX, SIZE, INSTITUTION_FIELDS
 
 app = Flask(__name__)
 app.debug = True
 
 connections.create_connection(hosts=[ELASTIC_URI])
-
-INSTITUTION_FIELDS = ['name', 'established', 'street_address', 'city', 'state', 'country', 'ext_code', 'web_url',
-'_id', 'public', 'for_profit', 'degree']
-
-class Institution(DocType):
-	name = String()
-	established = String()
-	location = {
-		'street_address': String(),
-		'city': String(),
-		'state': String(),
-		'country': String(),
-		'ext_code': Integer()
-	}
-	web_url = String()
-	_id = String()
-	public = Boolean()
-	for_profit = Boolean()
-	degree = Boolean()
-	other_names = String()
-	
-	def save(self, **kwargs):
-		self.meta.id = self.id
-		return super(Institution, self).save(**kwargs)
-
-	class Meta:
-		index = ELASTIC_INDEX
 
 def main():
 	Institution.init()

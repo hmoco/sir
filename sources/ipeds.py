@@ -3,12 +3,13 @@ import logging
 
 from schema_transformer.transformer import CSVTransformer
 from elasticsearch.exceptions import SerializationError
-from main import Institution
+
+from models import Institution
+from settings import IPEDS_FILE
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 
-IPEDS_FILE = 'raw_data/hd2013.csv'
 
 class IpedsTransformer(CSVTransformer):
 
@@ -28,7 +29,7 @@ schema = {
 		'ext_code': 'ZIP'
 	},
 	'web_url': 'WEBADDR',
-	'id': 'UNITID',
+	'id_': 'UNITID',
 	'public': ('CONTROL', lambda x: int(x) ==  2),
 	'for_profit': ('CONTROL', lambda x: int(x) == 3),
 	'degree': ('UGOFFER', lambda x: int(x) == 1)
