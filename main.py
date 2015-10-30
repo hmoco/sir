@@ -78,12 +78,14 @@ def autocomplete_institutions_titles():
 	if not name:
 		return Response({'Autocomplete query requires a "?name={} parameter'}, status=500)
 	page = int(request.args.get('page') or 1)
-	size = int(request.args.get('size') or 10)
+	size = int(request.args.get('size') or SIZE)
 	start = (page - 1) * size
-	s = Search(index=ELASTIC_INDEX).query('match_phrase_prefix', name={'query': name, 'slop': 5})[start:start + size]
-	res = s.execute()
-
-	return Response(json.dumps(get_names(res)), status=200)
+	s_title = Search(index=ELASTIC_INDEX).query('match_phrase_prefix', name={'query': name, 'slop': 5})[start:start + size]
+	res_title = s_title.execute()
+	s_alias =  Search(index=ELASTIC_INDEX).query('match_phrase_prefix', other_names={'query': name, 'slop': 5})[start:start + size]
+	res_alias = s_alias.execute()
+	comb = list(set(get_names(res_alias) + get_names(res_title)))
+	return Response(json.dumps(comb), status=200)
 
 @app.route('/')
 def home():
