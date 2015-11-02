@@ -13,26 +13,26 @@ logging.basicConfig()
 
 class IpedsTransformer(CSVTransformer):
 
-	def _transform_string(self, val, doc):
-		val = super(IpedsTransformer, self)._transform_string(val, doc)
-		return val.decode('Windows-1252').encode('utf-8')
+    def _transform_string(self, val, doc):
+        val = super(IpedsTransformer, self)._transform_string(val, doc)
+        return val.decode('Windows-1252').encode('utf-8')
 
-	def load(self, doc):
-		return doc
+    def load(self, doc):
+        return doc
 
 schema = {
-	'name': 'INSTNM',
-	'location': {
-		'street_address': 'ADDR',
-		'city': 'CITY',
-		'state': 'STABBR',
-		'ext_code': 'ZIP'
-	},
-	'web_url': 'WEBADDR',
-	'id_': 'UNITID',
-	'public': ('CONTROL', lambda x: int(x) ==  2),
-	'for_profit': ('CONTROL', lambda x: int(x) == 3),
-	'degree': ('UGOFFER', lambda x: int(x) == 1)
+    'name': 'INSTNM',
+    'location': {
+        'street_address': 'ADDR',
+        'city': 'CITY',
+        'state': 'STABBR',
+        'ext_code': 'ZIP'
+    },
+    'web_url': 'WEBADDR',
+    'id_': 'UNITID',
+    'public': ('CONTROL', lambda x: int(x) ==  2),
+    'for_profit': ('CONTROL', lambda x: int(x) == 3),
+    'degree': ('UGOFFER', lambda x: int(x) == 1)
 }
 
 def debug(func):
@@ -44,17 +44,17 @@ def debug(func):
 
 @debug
 def populate():
-	with open(IPEDS_FILE) as f:
-		reader = csv.reader(f)
+    with open(IPEDS_FILE) as f:
+        reader = csv.reader(f)
 
-		transformer = IpedsTransformer(schema, next(reader))
+        transformer = IpedsTransformer(schema, next(reader))
 
-		for row in reader:
-			transformed = transformer.transform(row)
-			logger.info('Adding {0}.'.format(transformed['name']))
-			
-			inst = Institution(country='United States', **transformed)
-			inst.save()
+        for row in reader:
+            transformed = transformer.transform(row)
+            logger.info('Adding {0}.'.format(transformed['name']))
+            
+            inst = Institution(country='United States', **transformed)
+            inst.save()
 
 if __name__ == "__main__":
-	populate()
+    populate()
